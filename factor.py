@@ -27,13 +27,83 @@ class Factor:
 
 
 def events(vars, domains):
-    thing = list(itertools.product(list(zip(vars,element)) for element in domains))
- 
-    return thing
+    values = [domains[var] for var in vars]
+    combinations = itertools.product(*values)
+    return [dict(zip(vars, combo)) for combo in combinations]
     
 
 def marginalize(factor, variable):
-    """TODO: Implement this for Question Two."""
+    newVars = []
+    for var in factor.variables:
+        if var != variable:
+            newVars.append(var)
+    
+    newValues = {}
+    possibleValues = {}
+
+    for index, varName in enumerate(factor.variables):
+        seenValues = set()
+        for keyTuple in factor.values.keys():
+            seenValues.add(keyTuple[index])
+        possibleValues[varName] = list(seenValues)
+
+    valueLists = []
+    for varName in newVars:
+        valueLists.append(possibleValues[varName])
+    
+    for combo in itertools.product(*valueLists):
+        newEvent = {}
+        
+        for i in range (len(newVars)):
+            varName = newVars[i]
+            varValue = combo[i]
+            newEvent[varName] = varValue
+        
+        sumVal = 0;
+        for val in possibleValues[variable]:
+            fullEvent = {}
+            for k, v in newEvent.items():
+                fullEvent[k] = v
+            
+            fullEvent[variable] = val
+            value = factor[fullEvent]
+            sumVal += value
+        
+        newValues[tuple(combo)] = sumVal
+
+
+    return Factor(newVars, newValues)
+    
+
 
 def multiply_factors(factors, domains):
-    """TODO: Implement this for Question Three."""
+    allVars = []
+
+    for factor in factors:
+        for var in factor.variables:
+            if var not in allVars:
+                allVars.append(var)
+    
+    newValues = {}
+
+    values = []
+    for var in allVars:
+        values.append(domains[var])
+
+    for combo in itertools.product(*values):
+        newEvent = {}
+        for i in range(len(allVars)):
+             newEvent[allVars[i]] = combo[i]
+        
+        
+        prodVal = 1
+        for factor in factors:
+            partialEvent = {}
+            for var in factor.variables:
+                partialEvent[var] = newEvent[var]
+            val = factor[partialEvent]
+            prodVal *= val
+        
+        newValues[tuple(combo)] = prodVal
+
+    return Factor(allVars, newValues)

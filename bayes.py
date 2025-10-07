@@ -1,3 +1,4 @@
+from factor import multiply_factors, marginalize
 class BayesianNetwork:
     """Represents a Bayesian network by its factors, i.e. the conditional probability tables (CPTs).
 
@@ -37,7 +38,28 @@ def eliminate(bnet, variable):
         a new BayesianNetwork, equivalent to the current Bayesian network, after
         eliminating the specified variable
     """
-    # TODO: Implement this for Question Four.
+    factorsWithVar = []
+    factorsWithoutVar = []
+    for factor in bnet.factors:
+        if variable in factor.variables:
+            factorsWithVar.append(factor)
+        else:
+            factorsWithoutVar.append(factor)
+    
+    if len(factorsWithVar) == 0:
+        return bnet
+    
+    combinedFactor = multiply_factors(factorsWithVar, bnet.domains)
+    marginalizedFactor = marginalize(combinedFactor, variable)
+
+    newFactors = [];
+
+    for factor in factorsWithoutVar:
+        newFactors.append(factor)
+    
+    newFactors.append(marginalizedFactor)
+
+    return BayesianNetwork(newFactors, bnet.domains)
 
 
 def compute_marginal(bnet, vars):
@@ -50,9 +72,27 @@ def compute_marginal(bnet, vars):
     vars : set[str]
         the variables that we want to compute the marginal over
     """
-    # TODO: Implement this for Question Five.
+    elim_order, _ = list(bnet.variables), None
+    revised_elim_order = [var for var in elim_order if var not in vars]
+    for var in revised_elim_order:
+        bnet = eliminate(bnet, var)
+    return multiply_factors(bnet.factors, bnet.domains)
+
     
     
 def compute_conditional(bnet, event, evidence):
     """Computes the conditional probability of an event given the evidence event."""
-    # TODO: Implement this for Question Five.
+    aAndB = {**event, **evidence}
+    aAndBFactor = compute_marginal(bnet, aAndB.keys())
+    prob = aAndBFactor[aAndB]
+
+    evidenceFactor = compute_marginal(bnet, evidence.keys())
+    evidenceProb = evidenceFactor[evidence]
+
+    if evidenceProb == 0:
+        return 0
+
+    return prob/evidenceProb;
+
+
+
