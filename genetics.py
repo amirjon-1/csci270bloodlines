@@ -1,5 +1,5 @@
 from bayes import BayesianNetwork
-
+from factor import Factor
 
 class FamilyMember:
     """A single member of a family tree."""
