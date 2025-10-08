@@ -1,4 +1,5 @@
 from bayes import BayesianNetwork
+from factor import Factor
 
 
 class FamilyMember:
@@ -113,7 +114,51 @@ def create_genotype_cpt(person):
     Factor
         a Factor specifying the probability of a genotype, given one's inherited genes
     """
-    # TODO: Implement this for Question Eight.
+
+    sex = person.get_sex()
+
+    if sex == "male":
+
+        variables = [f"G_{person.get_name()}", f"M_{person.get_name()}"]
+
+        values = {}
+
+        for m in ['x', 'X']:
+            if m == 'x':
+                values[('xy', m)] = 1.0
+                values[('Xy', m)] = 0.0
+            else:
+                values[('xy', m)] = 0.0
+                values[('Xy', m)] = 1.0
+
+        return Factor(variables, values)
+    
+    else:
+        
+        variables = [f"G_{person.get_name()}", f"M_{person.get_name()}", f"P_{person.get_name()}"]
+
+        values = {}
+
+        for m in ['x', 'X']:
+            for p in ['x', 'X']:
+                if m == 'x' and p == 'x':
+                    values[('xx', m, p)] = 1.0
+                    values[('xX', m, p)] = 0.0
+                    values[('XX', m, p)] = 0.0
+                elif (m == 'x' and p == 'X') or (m == 'X' and p == 'x'):
+                    values[('xx', m, p)] = 0.0
+                    values[('xX', m, p)] = 1.0
+                    values[('XX', m, p)] = 0.0
+                else:
+                    values[('xx', m, p)] = 0.0
+                    values[('xX', m, p)] = 0.0
+                    values[('XX', m, p)] = 1.0
+
+        return Factor(variables, values)
+
+
+    # TODO: Implement this for Question Eight. Any ideas? I'm trying to figure out what its supposed to return.
+    # I think it's supposed to return the thing above (factor) which should just be a float, no?
 
 
 def create_maternal_inheritance_cpt(person):
@@ -131,6 +176,31 @@ def create_maternal_inheritance_cpt(person):
     """
     # TODO: Implement this for Question Nine.
 
+    kid = person.get_name()
+    mom = person.mother
+
+    if mom is None:
+        variables = [f"M_{kid}"]
+        values = {('x',): 29999/30000, ('X',): 1/30000}
+        return Factor(variables, values)
+    
+    
+    variables = [f"M_{kid}", f"G_{mom.get_name()}"]
+    values = {}
+
+    for g in ['xx', 'xX', 'XX']:
+        if g == 'xx':
+            values[('x', g)] = 1.0
+            values[('X', g)] = 0.0
+        elif g == 'xX':
+            values[('x', g)] = 0.5
+            values[('X', g)] = 0.5
+        else:
+            values[('x', g)] = 0.0
+            values[('X', g)] = 1.0
+
+    return Factor(variables, values)
+
 
 def create_paternal_inheritance_cpt(person):
     """Creates a conditional probability table (CPT) specifying the probability of the gene inherited from one's father.
@@ -146,6 +216,33 @@ def create_paternal_inheritance_cpt(person):
         a Factor specifying the probability of the gene inherited from the family member's father.
     """
     # TODO: Implement this for Question Ten.
+
+    kid = person
+    dad = person.father
+
+    if kid.get_sex() == "male":
+        variables = [f"M_{kid.get_name()}"]
+        values = {('y',): 1.0}
+        return Factor(variables, values)
+    
+    else:
+        if dad is None:
+            variables = [f"P_{kid.get_name()}"]
+            values = {('x',): 29999/30000, ('X',): 1/30000}
+            return Factor(variables, values)
+        
+        variables = [f"P_{kid.get_name()}", f"G_{dad.get_name()}"]
+        values = {}
+
+        for g in ['xy', 'Xy']:
+            if g == 'xy':
+                values[('x', g)] = 1.0
+                values[('X', g)] = 0.0
+            else:
+                values[('x', g)] = 0.0
+                values[('X', g)] = 1.0
+
+        return Factor(variables, values)
 
 
 def create_family_bayes_net(family):
