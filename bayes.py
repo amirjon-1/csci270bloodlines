@@ -1,4 +1,5 @@
 from factor import multiply_factors, marginalize
+from util import compute_elimination_order
 class BayesianNetwork:
     """Represents a Bayesian network by its factors, i.e. the conditional probability tables (CPTs).
 
@@ -72,7 +73,7 @@ def compute_marginal(bnet, vars):
     vars : set[str]
         the variables that we want to compute the marginal over
     """
-    elim_order, _ = list(bnet.variables), None
+    elim_order, _ = compute_elimination_order(bnet)
     revised_elim_order = [var for var in elim_order if var not in vars]
     for var in revised_elim_order:
         bnet = eliminate(bnet, var)
