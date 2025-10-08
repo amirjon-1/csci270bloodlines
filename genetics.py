@@ -1,5 +1,4 @@
 from bayes import BayesianNetwork
-from factor import Factor
 
 
 class FamilyMember:
@@ -82,7 +81,30 @@ def create_variable_domains(family):
     dict[str, list[str]]
         a dictionary mapping each variable to its domain (i.e. its possible values)
     """
-    # TODO: Implement this for Question Six.
+    domains = {}
+    
+    for person in family:
+        name = person.get_name()
+        sex = person.get_sex()
+        
+        # M_N: maternally inherited gene - always present
+        domains[f'M_{name}'] = ['x', 'X']
+        
+        # P_N: paternally inherited gene - only for females
+        if sex == "female":
+            domains[f'P_{name}'] = ['x', 'X']
+        
+        # G_N: genotype - depends on sex
+        if sex == "female":
+            domains[f'G_{name}'] = ['xx', 'xX', 'XX']
+        else:  # male
+            domains[f'G_{name}'] = ['xy', 'Xy']
+        
+        # H_N: hemophilia status - always present
+        domains[f'H_{name}'] = ['-', '+']
+    
+    return domains
+
 
 
 def create_hemophilia_cpt(person):
@@ -98,7 +120,35 @@ def create_hemophilia_cpt(person):
     Factor
         a Factor specifying the probability of hemophilia, given one's genotype
     """
-    # TODO: Implement this for Question Seven.
+    name = person.get_name()
+    sex = person.get_sex()
+
+    g_var = f'G_{name}'
+    h_var = f'H_{name}'
+
+    probs = {}
+    
+    if sex == "female":
+        # Female genotypes: xx, xX, XX
+        # Only XX results in hemophilia (recessive)
+        probs[('xx', '-')] = 1.0
+        probs[('xx', '+')] = 0.0
+        
+        probs[('xX', '-')] = 1.0
+        probs[('xX', '+')] = 0.0
+        
+        probs[('XX', '-')] = 0.0
+        probs[('XX', '+')] = 1.0
+    else: 
+        # Male genotypes: xy, Xy
+        # Xy results in hemophilia
+        probs[('xy', '-')] = 1.0
+        probs[('xy', '+')] = 0.0
+        
+        probs[('Xy', '-')] = 0.0
+        probs[('Xy', '+')] = 1.0
+    
+    return Factor([g_var, h_var], probs)
 
 
 def create_genotype_cpt(person):
